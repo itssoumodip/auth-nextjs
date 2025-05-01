@@ -33,12 +33,15 @@ export default function ProfilePage() {
       <h1>Profile</h1>
       <hr />
       <p>Profile page</p>
-      <h2 className="text-2xl font-bold p-3 m-4 bg-orange-300/40 rounded">
-        User ID: {data === 'nothing' ? "Nothing" : (
+      <h2 className="text-2xl p-3 m-4">
+          User ID: 
+        <span className="text-2xl text-black font-bold px-3  py-1 m-4 bg-orange-400 rounded">
+          {data === 'nothing' ? "Nothing" : (
           <Link href={`/profile/${data}`}>
             {data}
           </Link>
         )}
+        </span>
       </h2>
       <hr />
       <button 
