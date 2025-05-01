@@ -24,8 +24,9 @@ export default function SignupPage() {
       router.push("/login");
       toast.success("Signup successful, please login to continue");
     } catch (error: any) {
-      toast.error("Error signing up, please try again later");
-      console.log("Error signing up", error.message);
+      const errorMessage = error.response?.data?.error || "Error signing up, please try again later";
+      toast.error(errorMessage);
+      console.log("Error signing up:", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -73,12 +74,13 @@ export default function SignupPage() {
       <button
         className="bg-gray-600 text-white rounded-md p-2 w-1/3 hover:bg-gray-700"
         onClick={onSignup}
+        disabled={buttonDisabled || loading}
         >
-          {buttonDisabled ? "Please fill all fields" : "Signup here"}
+          {loading ? "Processing..." : buttonDisabled ? "Please fill all fields" : "Signup here"}
       </button>
       <Link href="/login" className="text-gray-400 hover:underline mt-4">
         Visit Login page 
       </Link>
     </div>
   );
-}   
+}
