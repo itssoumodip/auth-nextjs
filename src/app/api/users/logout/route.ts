@@ -9,7 +9,7 @@ export async function GET() {
         });
         response.cookies.set("token", "", {
             httpOnly: true,
-            expires: new Date(0), // Set the expiration date to the past to delete the cookie
+            expires: new Date(0), 
         });
         return response;
     } catch (error: any) {

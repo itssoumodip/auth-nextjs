@@ -92,7 +92,7 @@ export default function LoginPage() {
                     <label htmlFor="password" className="block text-xs font-medium text-zinc-400">
                       Password
                     </label>
-                    <Link href="#" className="text-xs text-zinc-400 hover:text-white transition-colors">
+                    <Link href="/forgot-password" className="text-xs text-zinc-400 hover:text-white transition-colors">
                       Forgot password?
                     </Link>
                   </div>
