@@ -1,12 +1,12 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -16,7 +16,6 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [resetComplete, setResetComplete] = useState(false);
 
-  // Validate token presence
   useEffect(() => {
     if (!token) {
       toast.error("Missing reset token");
@@ -27,13 +26,11 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
 
-    // Validate password strength
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters long");
       return;
@@ -41,7 +38,7 @@ export default function ResetPasswordPage() {
 
     try {
       setLoading(true);
-      const response = await axios.post("/api/users/reset-password", {
+      await axios.post("/api/users/reset-password", {
         token,
         password
       });
@@ -49,7 +46,6 @@ export default function ResetPasswordPage() {
       toast.success("Password reset successful");
       setResetComplete(true);
       
-      // Redirect to login after a short delay
       setTimeout(() => {
         router.push("/login");
       }, 2000);
@@ -68,7 +64,7 @@ export default function ResetPasswordPage() {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white">Password Reset Complete</h1>
             <p className="mt-4 text-sm text-gray-400">
-              Your password has been reset successfully. You'll be redirected to the login page shortly.
+              Your password has been reset successfully. You will be redirected to the login page shortly.
             </p>
             <div className="mt-6">
               <Link
@@ -140,5 +136,28 @@ export default function ResetPasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+function ResetPasswordLoading() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center py-2">
+      <div className="w-full max-w-md space-y-8 rounded-md border border-gray-800 bg-gray-900 p-8 shadow-md">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white">Loading...</h1>
+          <div className="mt-4 flex justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-indigo-500"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
