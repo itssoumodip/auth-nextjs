@@ -2,21 +2,17 @@ import User from '@/models/userModel';
 import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
 
-// Initialize Resend with API key from environment variable
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
 
-// Development mode check
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const sendEmail = async ({ email, emailType, userId }: any) => {
     try {
-        // Log for debugging
         console.log(`[Email Service] Preparing to send ${emailType} email to: ${email}`);
         
         const hashedToken = await bcrypt.hash(userId.toString(), 10);
 
-        // Store the token in the database
         if (emailType === "VERIFY") {
             await User.findByIdAndUpdate(userId, {
                 verifyToken: hashedToken,
@@ -29,10 +25,18 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
             });
         }
 
-        // Check if DOMAIN is set
-        const domain = process.env.DOMAIN || 'http://localhost:3000';
+        let domain;
+        
+        if (process.env.VERCEL_URL) {
+            domain = `https://${process.env.VERCEL_URL}`;
+        } else if (process.env.DOMAIN) {
+            domain = process.env.DOMAIN;
+        } else if (isDevelopment) {
+            domain = 'http://localhost:3000';
+        } else {
+            domain = 'http://localhost:3000';
+        }
 
-        // Create link URL based on email type
         const url = emailType === "VERIFY" 
             ? `${domain}/verifyemail?token=${hashedToken}`
             : `${domain}/reset-password?token=${hashedToken}`;
@@ -53,15 +57,12 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
             </div>
         `;
 
-        // IMPORTANT: Always log the reset URL during development for testing purposes
         if (isDevelopment) {
             console.log("\n======= DEVELOPMENT MODE =======");
             console.log(`Token: ${hashedToken}`);
             console.log(`Reset URL: ${url}`);
             console.log("=================================\n");
-            
-            // In development, we can skip actual email sending if needed
-            // and just return the token info for testing
+    
             if (!resendApiKey || process.env.SKIP_EMAIL === 'true') {
                 return {
                     success: true,
@@ -73,12 +74,11 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
             }
         }
 
-        // Try to send the email with Resend
         try {
             console.log(`Attempting to send email via Resend to: ${email}`);
             
             const { data, error } = await resend.emails.send({
-                from: 'Auth App <onboarding@resend.dev>', // This is Resend's verified testing domain
+                from: 'Auth App <onboarding@resend.dev>',
                 to: [email],
                 subject: subject,
                 html: htmlContent,
@@ -95,7 +95,6 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
         } catch (emailError: any) {
             console.error("Failed to send email via Resend:", emailError);
             
-            // If we're in development, return the token even if email sending fails
             if (isDevelopment) {
                 return {
                     success: false,
@@ -106,7 +105,6 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
                 };
             }
             
-            // For production, we need to throw the error
             throw emailError;
         }
 
