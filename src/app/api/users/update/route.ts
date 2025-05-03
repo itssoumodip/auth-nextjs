@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/dbConfig/dbConfig";
+import { connect } from "@/dbConfig/dbConfig";
 import User from "@/models/userModel";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 
-connectDB();
+connect();
 
 export async function PUT(request: NextRequest) {
   try {

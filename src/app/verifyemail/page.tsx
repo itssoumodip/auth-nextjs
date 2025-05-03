@@ -34,7 +34,7 @@ export default function VerifyEmailPage() {
         } else {
             setLoading(false);
         }
-    }, [token])
+    }, [token, verifyUserEmail])
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#0a0b13] to-[#13151f] flex items-center justify-center px-4 py-12">
