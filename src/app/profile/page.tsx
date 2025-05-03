@@ -35,7 +35,6 @@ export default function ProfilePage() {
   }
 
   useEffect(() => {
-    // Fetch user details on page load
     getUserDetails();
   }, []);
 
@@ -82,7 +81,6 @@ export default function ProfilePage() {
       const response = await axios.put("/api/users/update", editUser);
       console.log("Profile updated", response.data);
       
-      // Update the user state with new data
       setUser({
         ...user,
         username: response.data.data.username,
@@ -135,10 +133,8 @@ export default function ProfilePage() {
           </div>
         </nav>
 
-        {/* Main Content */}
         <main className="flex-grow px-4 py-8 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            {/* Page Title */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Profile</h1>
               <p className="mt-2 text-sm text-zinc-400">Manage your account information and settings</p>
@@ -154,7 +150,6 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Profile Card */}
                 <div className="col-span-1">
                   <div className="bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 overflow-hidden shadow-xl">
                     <div className="px-6 py-8">
@@ -204,9 +199,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Account Details */}
                 <div className="col-span-1 lg:col-span-2 space-y-6">
-                  {/* Account Info */}
                   <div className="bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 overflow-hidden shadow-xl">
                     <div className="px-6 py-6">
                       <div className="flex items-center mb-6">
@@ -262,7 +255,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Security & Activity */}
                   <div className="bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 overflow-hidden shadow-xl">
                     <div className="px-6 py-6">
                       <div className="flex items-center mb-6">
@@ -309,7 +301,6 @@ export default function ProfilePage() {
         </main>
       </div>
 
-      {/* Edit Profile Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onClick={handleCloseEditModal}></div>

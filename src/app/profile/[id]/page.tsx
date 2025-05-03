@@ -14,16 +14,10 @@ export default function UserProfile({ params }: any) {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
-        // This is a placeholder - in a real app, you would fetch the user data by ID
-        // const res = await axios.get(`/api/users/${params.id}`);
-        // setUser(res.data.data);
-        
-        // For now, simulating data with timeout
         setTimeout(() => {
           setUser({
             username: "Username",
             _id: params.id
-            // We're removing email, isVerified and createdAt from public view
           });
           setLoading(false);
         }, 1000);
@@ -39,12 +33,9 @@ export default function UserProfile({ params }: any) {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Simple dark background without patterns for a cleaner look */}
       <div className="fixed inset-0 bg-gradient-to-b from-black via-zinc-900/40 to-black"></div>
 
-      {/* App Container */}
       <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Navigation Bar */}
         <nav className="border-b border-zinc-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
@@ -68,10 +59,8 @@ export default function UserProfile({ params }: any) {
           </div>
         </nav>
 
-        {/* Main Content */}
         <main className="flex-grow px-4 py-8 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            {/* Page Title */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Public Profile</h1>
               <p className="mt-2 text-sm text-zinc-400">Viewing user information</p>
@@ -103,18 +92,14 @@ export default function UserProfile({ params }: any) {
               </div>
             ) : user && (
               <div className="grid grid-cols-1 gap-6">
-                {/* User Profile Card - Simplified version */}
                 <div className="bg-zinc-900 rounded-md border border-zinc-800 overflow-hidden">
                   <div className="px-6 py-8 flex flex-col items-center sm:flex-row sm:items-start">
-                    {/* Avatar Circle */}
                     <div className="relative flex-shrink-0">
                       <div className="h-24 w-24 rounded-full bg-gradient-to-b from-zinc-700 to-zinc-800 flex items-center justify-center text-white text-3xl font-bold ring-2 ring-zinc-700">
                         {user.username ? user.username.charAt(0).toUpperCase() : "U"}
                       </div>
-                      {/* No verification badge since it's a public profile */}
                     </div>
                     
-                    {/* User Details */}
                     <div className="mt-6 sm:mt-0 sm:ml-8 text-center sm:text-left flex-grow">
                       <h2 className="text-2xl font-semibold">{user.username}</h2>
                       
@@ -128,7 +113,6 @@ export default function UserProfile({ params }: any) {
                   </div>
                 </div>
 
-                {/* About Section */}
                 <div className="bg-zinc-900 rounded-md border border-zinc-800 overflow-hidden">
                   <div className="px-6 py-6">
                     <div className="flex items-center mb-4">

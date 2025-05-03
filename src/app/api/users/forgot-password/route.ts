@@ -40,19 +40,12 @@ export async function POST(request: NextRequest) {
 
       console.log(`Reset email processing completed for: ${email}`);
       
-      if (result && result.devMode) {
-        console.log("Running in development mode - email not actually sent");
-        return NextResponse.json({
-          message: "Password reset link generated (check server console)",
-          success: true,
-          devMode: true
-        });
-      }
-      
+      // Return the same success response regardless of dev mode
       return NextResponse.json({
         message: "Password reset email sent successfully",
         success: true
       });
+      
     } catch (emailError: any) {
       console.error(`Email sending failed for ${email}:`, emailError);
       
