@@ -40,7 +40,6 @@ export default function LoginPage() {
   
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
-      {/* Monochrome gradient background */}
       <div className="fixed inset-0 bg-gradient-to-tr from-black/60 via-zinc-900/60 to-zinc-800/60">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-700/10 via-transparent to-transparent"></div>
         <div className="absolute inset-0 backdrop-blur-[100px]"></div>

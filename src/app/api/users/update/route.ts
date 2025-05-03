@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const reqBody = await request.json();
-    const { username, email } = reqBody;
+    const { username, email, bio } = reqBody;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -31,6 +31,10 @@ export async function PUT(request: NextRequest) {
     if (username) {
       user.username = username;
     }
+    
+    if (bio !== undefined) {
+      user.bio = bio;
+    }
 
     await user.save();
 
@@ -41,6 +45,7 @@ export async function PUT(request: NextRequest) {
         _id: user._id,
         username: user.username,
         email: user.email,
+        bio: user.bio
       }
     });
 

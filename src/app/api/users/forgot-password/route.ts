@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
 
       console.log(`Reset email processing completed for: ${email}`);
       
-      // Return the same success response regardless of dev mode
       return NextResponse.json({
         message: "Password reset email sent successfully",
         success: true

@@ -1,7 +1,7 @@
 "use client";
 import axios from "axios";
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import Image from "next/image";
@@ -13,16 +13,37 @@ export default function ProfilePage() {
   const [user, setUser] = React.useState({
     username: "",
     email: "",
-    _id: ""
+    _id: "",
+    profileImage: "",
+    bio: "",
+    createdAt: ""
   });
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [editUser, setEditUser] = React.useState({
     username: "",
-    email: ""
+    email: "",
+    bio: ""
   });
   const [updating, setUpdating] = React.useState(false);
+  const [uploadingImage, setUploadingImage] = React.useState(false);
+  const [showImageModal, setShowImageModal] = React.useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  const logout = async () => { 
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "N/A";
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "N/A";
+      return date.toLocaleDateString();
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "N/A";
+    }
+  };
+  
+  const logout = async () => {
     try {
       const response = await axios.get("/api/users/logout");
       console.log("Logout success", response.data)
@@ -47,12 +68,16 @@ export default function ProfilePage() {
       const userData = {
         username: res.data.data.username || "",
         email: res.data.data.email || "",
-        _id: res.data.data._id || ""
+        _id: res.data.data._id || "",
+        profileImage: res.data.data.profileImage || "",
+        bio: res.data.data.bio || "",
+        createdAt: res.data.data.createdAt || ""
       };
       setUser(userData);
       setEditUser({
         username: userData.username,
-        email: userData.email
+        email: userData.email,
+        bio: userData.bio
       });
     } catch (error) {
       console.error("Error fetching user details", error);
@@ -65,7 +90,8 @@ export default function ProfilePage() {
   const handleOpenEditModal = () => {
     setEditUser({
       username: user.username,
-      email: user.email
+      email: user.email,
+      bio: user.bio
     });
     setShowEditModal(true);
   };
@@ -80,13 +106,14 @@ export default function ProfilePage() {
       setUpdating(true);
       const response = await axios.put("/api/users/update", editUser);
       console.log("Profile updated", response.data);
-      
+
       setUser({
         ...user,
         username: response.data.data.username,
-        email: response.data.data.email
+        email: response.data.data.email,
+        bio: response.data.data.bio
       });
-      
+
       toast.success("Profile updated successfully");
       setShowEditModal(false);
     } catch (error: any) {
@@ -96,6 +123,110 @@ export default function ProfilePage() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleImageClick = () => {
+    if (user.profileImage) {
+      setShowImageModal(true);
+    } else if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleEditImageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (editFileInputRef.current) {
+      editFileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Image must be less than 3MB');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      toast.loading('Updating image...');
+
+      const base64 = await convertToBase64(file);
+
+      const response = await axios.post('/api/users/upload-image', {
+        imageBase64: base64
+      });
+
+      setUser({
+        ...user,
+        profileImage: response.data.profileImage
+      });
+
+      toast.dismiss();
+      toast.success('Profile image updated');
+    } catch (error: any) {
+      console.error('Error Updating image:', error);
+      toast.dismiss();
+      toast.error(error.response?.data?.error || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleEditImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Image must be less than 3MB');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      toast.loading('Updating image...');
+
+      const base64 = await convertToBase64(file);
+
+      const response = await axios.post('/api/users/upload-image', {
+        imageBase64: base64
+      });
+
+      setUser({
+        ...user,
+        profileImage: response.data.profileImage
+      });
+
+      toast.dismiss();
+      toast.success('Profile image updated');
+    } catch (error: any) {
+      console.error('Error updating image:', error);
+      toast.dismiss();
+      toast.error(error.response?.data?.error || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   return (
@@ -144,7 +275,7 @@ export default function ProfilePage() {
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="relative">
                   <div className="h-16 w-16 rounded-full border-t-2 border-l-2 border-white animate-spin"></div>
-                  <div className="h-16 w-16 rounded-full border-b-2 border-r-2 border-zinc-400 animate-spin absolute inset-0" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                  <div className="h-16 w-16 rounded-full border-b-2 border-r-2 border-zinc-400 animate-spin absolute inset-0" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
                 </div>
                 <p className="mt-4 text-zinc-400">Loading your profile information...</p>
               </div>
@@ -155,16 +286,53 @@ export default function ProfilePage() {
                     <div className="px-6 py-8">
                       <div className="flex flex-col items-center">
                         <div className="relative">
-                          <div className="h-24 w-24 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-white text-3xl font-bold ring-4 ring-zinc-900">
-                            {user.username ? user.username.charAt(0).toUpperCase() : "?"}
+                          {/* Profile image with upload functionality */}
+                          <div
+                            className="h-24 w-24 rounded-full overflow-hidden relative cursor-pointer group"
+                            onClick={handleImageClick}
+                          >
+                            {user.profileImage ? (
+                              <Image
+                                src={user.profileImage}
+                                alt={user.username}
+                                width={96}
+                                height={96}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-24 w-24 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-white text-3xl font-bold">
+                                {user.username ? user.username.charAt(0).toUpperCase() : "?"}
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
                           </div>
+
+                          {/* Hidden file input */}
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImageChange}
+                            accept="image/*"
+                            className="hidden"
+                          />
+
                           <span className="absolute bottom-1 right-1 w-4 h-4 bg-zinc-300 rounded-full border-2 border-zinc-900"></span>
                         </div>
-                        
+
                         <h2 className="mt-4 text-xl font-semibold">{user.username}</h2>
                         <p className="text-zinc-400 text-sm break-all mt-1">{user.email}</p>
                         
-                        <button 
+                        {user.bio && (
+                          <p className="mt-3 text-sm text-center text-zinc-300 border-t border-white/5 pt-3">
+                            {user.bio}
+                          </p>
+                        )}
+
+                        <button
                           onClick={handleOpenEditModal}
                           className="mt-6 w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/10 flex items-center justify-center transition-all gap-2 group"
                         >
@@ -183,9 +351,9 @@ export default function ProfilePage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </Link>
-                          
-                          <button 
-                            onClick={getUserDetails} 
+
+                          <button
+                            onClick={getUserDetails}
                             className="flex items-center justify-between px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all group"
                           >
                             <span className="text-sm">Refresh Data</span>
@@ -239,8 +407,8 @@ export default function ProfilePage() {
                               {user._id}
                             </div>
                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                              <Link 
-                                href={`/profile/${user._id}`} 
+                              <Link
+                                href={`/profile/${user._id}`}
                                 className="inline-flex items-center px-2 py-1 rounded-md text-xs text-zinc-300 hover:bg-white/5 transition-colors"
                               >
                                 View
@@ -279,7 +447,7 @@ export default function ProfilePage() {
                           </div>
                           <span className="px-2 py-1 bg-zinc-700/30 text-zinc-300 rounded-md text-xs">Active</span>
                         </div>
-                        
+
                         <div className="flex justify-between items-center px-4 py-3 bg-white/5 rounded-lg">
                           <div className="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-zinc-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -294,6 +462,30 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Add bio section */}
+                  <div className="bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 overflow-hidden shadow-xl">
+                    <div className="px-6 py-6">
+                      <div className="flex items-center mb-6">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-800 mr-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </span>
+                        <h3 className="text-lg font-medium">About You</h3>
+                      </div>
+
+                      <div className="space-y-4">
+                        {user.bio ? (
+                          <p className="text-zinc-300 bg-white/5 rounded-lg border border-white/10 px-4 py-3">{user.bio}</p>
+                        ) : (
+                          <p className="text-zinc-400 italic bg-white/5 rounded-lg border border-white/10 px-4 py-3">
+                            You haven't added a bio yet. Click "Edit Profile" to add information about yourself.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -301,17 +493,68 @@ export default function ProfilePage() {
         </main>
       </div>
 
+      {/* Full screen image modal */}
+      {showImageModal && user.profileImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+          <div
+            className="fixed inset-0 z-0"
+            onClick={() => setShowImageModal(false)}
+          ></div>
+
+          <div className="relative z-10 max-w-screen-lg max-h-screen flex flex-col items-center">
+            <div className="relative">
+              <Image
+                src={user.profileImage}
+                alt={user.username}
+                width={600}
+                height={600}
+                className="max-h-[80vh] w-auto object-contain rounded-lg shadow-2xl"
+              />
+
+              <button
+                onClick={() => setShowImageModal(false)}
+                className="absolute -top-4 -right-4 bg-zinc-800 rounded-full p-2 text-white hover:bg-zinc-700 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div className="mt-4 flex space-x-3">
+              <button
+                onClick={handleEditImageClick}
+                className="px-4 py-2 bg-zinc-800 rounded-md text-white hover:bg-zinc-700 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                </svg>
+                <span>Change Photo</span>
+              </button>
+
+              <input
+                type="file"
+                ref={editFileInputRef}
+                onChange={handleEditImageChange}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onClick={handleCloseEditModal}></div>
-          
+
           <div className="relative bg-zinc-900 border border-white/10 rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all sm:scale-100 opacity-100">
             <div className="absolute top-0 inset-x-0 h-1 bg-zinc-600"></div>
-            
+
             <div className="px-6 pt-6 pb-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-medium">Edit Profile</h3>
-                <button 
+                <button
                   onClick={handleCloseEditModal}
                   className="rounded-md text-zinc-400 hover:text-white focus:outline-none"
                 >
@@ -321,7 +564,50 @@ export default function ProfilePage() {
                 </button>
               </div>
               <p className="text-sm text-zinc-400 mb-5">Update your personal information</p>
-              
+
+              {/* Add profile image to edit modal */}
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <div
+                    className="h-24 w-24 rounded-full overflow-hidden cursor-pointer group border-2 border-zinc-700"
+                    onClick={handleEditImageClick}
+                  >
+                    <input
+                      type="file"
+                      ref={editFileInputRef}
+                      onChange={handleEditImageChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    {user.profileImage ? (
+                      <Image
+                        src={user.profileImage}
+                        alt={user.username}
+                        width={96}
+                        height={96}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-24 w-24 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center text-white text-3xl font-bold">
+                        {user.username ? user.username.charAt(0).toUpperCase() : "?"}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {uploadingImage && (
+                    <div className="absolute inset-0 bg-black/70 rounded-full flex items-center justify-center">
+                      <div className="h-8 w-8 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <form onSubmit={handleUpdateProfile} className="space-y-4">
                 <div>
                   <label htmlFor="username" className="block text-xs font-medium text-zinc-400 mb-1">
@@ -336,7 +622,7 @@ export default function ProfilePage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="email" className="block text-xs font-medium text-zinc-400 mb-1">
                     Email Address
@@ -351,6 +637,20 @@ export default function ProfilePage() {
                   />
                 </div>
                 
+                <div>
+                  <label htmlFor="bio" className="block text-xs font-medium text-zinc-400 mb-1">
+                    Bio <span className="text-zinc-500">(optional)</span>
+                  </label>
+                  <textarea
+                    id="bio"
+                    value={editUser.bio}
+                    onChange={(e) => setEditUser({ ...editUser, bio: e.target.value })}
+                    className="w-full px-3 py-2 bg-white/5 text-white rounded-lg border border-white/10 focus:border-zinc-500 focus:ring focus:ring-zinc-500/20 focus:outline-none"
+                    placeholder="Tell others a little about yourself..."
+                    rows={3}
+                  />
+                </div>
+
                 <div className="pt-4 flex gap-3">
                   <button
                     type="submit"
@@ -369,7 +669,7 @@ export default function ProfilePage() {
                       "Save Changes"
                     )}
                   </button>
-                  
+
                   <button
                     type="button"
                     className="flex-1 py-2 px-4 border border-white/10 rounded-md text-sm font-medium text-zinc-300 bg-white/5 hover:bg-white/10 focus:outline-none"

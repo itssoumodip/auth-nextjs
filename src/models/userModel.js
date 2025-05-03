@@ -17,6 +17,22 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please add a password"],
     },
+    profileImage: {
+        type: String,
+        default: "",
+    },
+    cloudinaryId: {
+        type: String,
+        default: "",
+    },
+    bio: {
+        type: String,
+        default: "",
+    },
+    lastLogin: {
+        type: Date,
+        default: Date.now,
+    },
     isVerified: {
         type: Boolean,
         default: false,
@@ -29,6 +45,8 @@ const userSchema = new mongoose.Schema({
     forgotPasswordTokenExpiry: Date,
     verifyToken: String,
     verifyTokenExpiry: Date,
+}, {
+    timestamps: true  
 })  
 
 const User = mongoose.models.users || mongoose.model("users", userSchema);

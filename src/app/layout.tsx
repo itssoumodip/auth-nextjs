@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Auth NextJS - Modern Authentication",
-  description: "A modern authentication system built with Next.js",
+  title: "NextAuth",
+  description: "Modern Authentication System",
 };
 
 export default function RootLayout({

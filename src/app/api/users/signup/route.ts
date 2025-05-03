@@ -17,23 +17,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({error: "Missing required fields"}, {status: 400});
         }
         
-        // Check if user with this email already exists
         const existingEmail = await User.findOne({email});
         if (existingEmail) {
             return NextResponse.json({error: "Email already in use"}, {status: 400});
         } 
         
-        // Check if username is already taken
         const existingUsername = await User.findOne({username});
         if (existingUsername) {
             return NextResponse.json({error: "Username already taken"}, {status: 400});
         }
         
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create new user
         const newUser = new User({
             username,
             email,
@@ -43,7 +39,6 @@ export async function POST(req: NextRequest) {
         const savedUser = await newUser.save();
         console.log("savedUser", savedUser);
 
-        // Send verification email 
         await sendEmail({email, emailType: "VERIFY", userId: savedUser._id});
 
         return NextResponse.json({
