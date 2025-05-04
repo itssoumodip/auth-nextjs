@@ -16,7 +16,8 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
         if (emailType === "VERIFY") {
             await User.findByIdAndUpdate(userId, {
                 verifyToken: hashedToken,
-                verifyTokenExpiry: Date.now() + 3600000 
+                verifyTokenExpiry: Date.now() + 3600000,
+                ...(process.env.NODE_ENV === 'production' && { isVerified: true })
             });
         } else if (emailType === "RESET") {
             await User.findByIdAndUpdate(userId, {
@@ -56,6 +57,17 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
                 <p>Regards,<br>Your App Team</p>
             </div>
         `;
+
+        if (process.env.NODE_ENV === 'production' && emailType === "VERIFY") {
+            console.log("Production mode: Skipping verification email requirement but keeping account creation");
+            return {
+                success: true,
+                productionMode: true,
+                message: "Email skipped in production. User auto-verified.",
+                url,
+                token: hashedToken
+            };
+        }
 
         if (isDevelopment) {
             console.log("\n======= DEVELOPMENT MODE =======");
@@ -102,6 +114,15 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
                     message: "Email failed but in development mode",
                     url,
                     token: hashedToken
+                };
+            }
+
+            if (emailType === "VERIFY") {
+                console.log("Production mode: Email failed but continuing with account creation");
+                return {
+                    success: false,
+                    productionMode: true,
+                    message: "Email failed in production but user created and auto-verified",
                 };
             }
             
