@@ -40,6 +40,15 @@ export async function POST(request: NextRequest) {
 
       console.log(`Reset email processing completed for: ${email}`);
       
+      if (process.env.NODE_ENV === 'production' && result?.productionMode) {
+        return NextResponse.json({
+          message: "Password reset link generated",
+          success: true,
+          resetUrl: result.url,
+          token: result.token
+        });
+      }
+      
       return NextResponse.json({
         message: "Password reset email sent successfully",
         success: true

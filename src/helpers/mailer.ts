@@ -6,6 +6,8 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = new Resend(resendApiKey);
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+// Your verified email that works with Resend
+const VERIFIED_EMAIL = 'soumodipddas@gmail.com';
 
 export const sendEmail = async ({ email, emailType, userId }: any) => {
     try {
@@ -17,7 +19,8 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
             await User.findByIdAndUpdate(userId, {
                 verifyToken: hashedToken,
                 verifyTokenExpiry: Date.now() + 3600000,
-                ...(process.env.NODE_ENV === 'production' && { isVerified: true })
+                // If the email is not your verified email, auto-verify them in production
+                ...((process.env.NODE_ENV === 'production' && email !== VERIFIED_EMAIL) && { isVerified: true })
             });
         } else if (emailType === "RESET") {
             await User.findByIdAndUpdate(userId, {
@@ -58,12 +61,14 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
             </div>
         `;
 
-        if (process.env.NODE_ENV === 'production' && emailType === "VERIFY") {
-            console.log("Production mode: Skipping verification email requirement but keeping account creation");
+        // In production mode with a non-verified email, return the special handling
+        if (process.env.NODE_ENV === 'production' && email !== VERIFIED_EMAIL && (emailType === "VERIFY" || emailType === "RESET")) {
+            console.log(`Production mode: Handling ${emailType} email specially for non-verified email: ${email}`);
+            
             return {
                 success: true,
                 productionMode: true,
-                message: "Email skipped in production. User auto-verified.",
+                message: `Email skipped in production. ${emailType === "VERIFY" ? "User auto-verified." : "Password reset token generated."}`,
                 url,
                 token: hashedToken
             };
@@ -89,6 +94,7 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
         try {
             console.log(`Attempting to send email via Resend to: ${email}`);
             
+            // Always attempt to send email in development or if it's your verified email
             const { data, error } = await resend.emails.send({
                 from: 'Auth App <onboarding@resend.dev>',
                 to: [email],
@@ -116,13 +122,16 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
                     token: hashedToken
                 };
             }
-
-            if (emailType === "VERIFY") {
-                console.log("Production mode: Email failed but continuing with account creation");
+            
+            // In production, if email fails but we're creating an account or resetting a password, don't throw
+            if (emailType === "VERIFY" || emailType === "RESET") {
+                console.log(`Production mode: Email failed but continuing with ${emailType === "VERIFY" ? "account creation" : "password reset"}`);
                 return {
                     success: false,
                     productionMode: true,
-                    message: "Email failed in production but user created and auto-verified",
+                    message: `Email failed in production but ${emailType === "VERIFY" ? "user created and auto-verified" : "password reset token generated"}`,
+                    url,
+                    token: hashedToken
                 };
             }
             

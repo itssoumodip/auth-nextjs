@@ -10,10 +10,12 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState("");
+  const [resetUrl, setResetUrl] = useState("");
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setResetUrl("");
     
     if (!email || !email.includes('@')) {
       setError("Please enter a valid email address");
@@ -25,7 +27,13 @@ export default function ForgotPasswordPage() {
       setLoading(true);
       const response = await axios.post("/api/users/forgot-password", { email });
       
-      toast.success("Reset link sent to your email");
+      if (response.data.resetUrl) {
+        setResetUrl(response.data.resetUrl);
+        toast.success("Reset link generated. Click the link below to reset your password.");
+      } else {
+        toast.success("Reset link sent to your email");
+      }
+      
       setEmailSent(true);
     } catch (error: any) {
       console.error("Forgot password error:", error);
@@ -59,7 +67,7 @@ export default function ForgotPasswordPage() {
                   {loading ? "Sending..." : !emailSent ? "Forgot Password" : "Reset Link Sent"}
                 </h1>
                 <p className="text-zinc-400 mt-2 text-sm">
-                  {!emailSent ? "Enter your email to reset your password" : "Check your inbox for the reset link"}
+                  {!emailSent ? "Enter your email to reset your password" : resetUrl ? "Use the link below to reset your password" : "Check your inbox for the reset link"}
                 </p>
               </div>
               
@@ -127,13 +135,31 @@ export default function ForgotPasswordPage() {
                     </div>
                   </div>
                   
-                  <p className="text-center text-zinc-400">
-                    We've sent a password reset link to your email. Please check your inbox and follow the instructions to reset your password.
-                  </p>
+                  {resetUrl ? (
+                    <div className="text-center">
+                      <p className="text-zinc-400 mb-4">
+                        Click the button below to reset your password:
+                      </p>
+                      <a 
+                        href={resetUrl}
+                        className="w-full py-3.5 px-4 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 transition-all duration-300 inline-block"
+                      >
+                        Reset My Password
+                      </a>
+                      <p className="mt-4 text-xs text-zinc-500 break-all">
+                        Or copy this link: {resetUrl}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-center text-zinc-400">
+                      We've sent a password reset link to your email. Please check your inbox and follow the instructions to reset your password.
+                    </p>
+                  )}
                   
                   <button
                     onClick={() => {
                       setEmailSent(false);
+                      setResetUrl("");
                     }}
                     className="w-full py-3.5 px-4 rounded-lg font-medium text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300"
                   >
